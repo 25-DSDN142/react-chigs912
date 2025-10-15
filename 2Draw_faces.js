@@ -61,10 +61,13 @@ function drawInteraction(faces, hands) {
 
     let noseTipX = face.keypoints[4].x;
     let noseTipY = face.keypoints[4].y;
+
+    let testX = face.keypoints[10].x; //replace in drawX if needed
+    let testY = face.keypoints[10].y;
     /*
     Start drawing on the face here
     */
-    noStroke()
+    noStroke() // delete this to get x on eyes
     fill(225, 225, 0);
     // fill(get(leftEyeCenterX, leftEyeCenterY))
 
@@ -76,11 +79,11 @@ function drawInteraction(faces, hands) {
     drawPoints(face.rightEye);
     drawPoints(face.rightEyebrow);
 
-    // drawX(rightEyeCenterX,rightEyeCenterY);
-    // drawX(leftEyeCenterX,leftEyeCenterY);
+    fingerPuppet(rightEyeCenterX,rightEyeCenterY);
+    fingerPuppet(leftEyeCenterX,leftEyeCenterY);
 
 
-    // drawX(noseTipX,noseTipY); 
+    drawX(testX,testY); 
 
     // drawX(face.keypoints[332].x,face.keypoints[332].y);
     // drawX(face.keypoints[103].x,face.keypoints[103].y);
@@ -94,6 +97,22 @@ function drawInteraction(faces, hands) {
   //------------------------------------------------------
   // You can make addtional elements here, but keep the face drawing inside the for loop. 
 }
+
+
+
+
+function fingerPuppet(x, y) {
+  noStroke();
+  fill(255); // white cloud
+
+  // Draw overlapping ellipses to form a cloud
+  ellipse(60, 60);
+  ellipse(30, x - 10, 50, 50);
+  ellipse(30, 10, y - 50, 50);
+  ellipse(50, 20, 70, 50);
+}
+
+
 
 function drawX(X, Y) {
   push()

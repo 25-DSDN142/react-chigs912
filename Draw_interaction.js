@@ -1,84 +1,111 @@
-// ----=  HANDS  =----
+let bgImage;
+let particles = [];
+
+
 function prepareInteraction() {
-  //bgImage = loadImage('/images/background.png');
+  bgImage = loadImage('images/background.png'); 
+  
 }
+
 
 function drawInteraction(faces, hands) {
+  // Draw background image
+  if (bgImage) {
+    blendMode(SOFT_LIGHT);
+    image(bgImage, 0, 0, width, height);
+    blendMode(BLEND);
+  }
 
-  // hands part
-  // USING THE GESTURE DETECTORS (check their values in the debug menu)
-  // detectHandGesture(hand) returns "Pinch", "Peace", "Thumbs Up", "Pointing", "Open Palm", or "Fist"
-
-  // for loop to capture if there is more than one hand on the screen. This applies the same process to all hands.
+ 
+  // hands
   for (let i = 0; i < hands.length; i++) {
     let hand = hands[i];
+
     if (showKeypoints) {
-      drawPoints(hand)
-      drawConnections(hand)
+      drawPoints(hand);
+      drawConnections(hand);
     }
-    // console.log(hand);
+
     let indexFingerTipX = hand.index_finger_tip.x;
     let indexFingerTipY = hand.index_finger_tip.y;
-    /*
-    Start drawing on the hands here
-    */
 
-    // pinchCircle(hand)
-    fill(225, 225, 0);
+    
+
+    // Draw fingertip circle
+    noStroke();
+    fill(255, 255, 100, 200);
     ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
 
-    /*
-    Stop drawing on the hands here
-    */
-  }
-
-
-
-  //------------------------------------------------------------
-  //facePart
-  // for loop to capture if there is more than one face on the screen. This applies the same process to all faces. 
-  for (let i = 0; i < faces.length; i++) {
-    let face = faces[i]; // face holds all the keypoints of the face
-    if (showKeypoints) {
-      drawPoints(face)
+    // particles at fingertip
+    for (let j = 0; j < 2; j++) {
+      particles.push({
+        x: indexFingerTipX,
+        y: indexFingerTipY,
+        dx: random(-1.5, 1.5),
+        dy: random(-2, -0.5),
+        life: 40,
+        col: color(random(150, 255), random(100, 255), random(255))
+      });
     }
-    // console.log(face);
-    /*
-    Once this program has a face, it knows some things about it.
-    This includes how to draw a box around the face, and an oval. 
-    It also knows where the key points of the following parts are:
-     face.leftEye
-     face.leftEyebrow
-     face.lips
-     face.rightEye
-     face.rightEyebrow
-    */
-
-    /*
-    Start drawing on the face here
-    */
-
-    // fill(225, 225, 0);
-    // ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
-
-    drawPoints(face.leftEye);
-    drawPoints(face.leftEyebrow);
-    drawPoints(face.lips);
-    drawPoints(face.rightEye);
-    drawPoints(face.rightEyebrow);
-    /*
-    Stop drawing on the face here
-    */
-
   }
-  //------------------------------------------------------
-  // You can make addtional elements here, but keep the face drawing inside the for loop. 
+
+  // Update/draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    noStroke();
+    fill(red(p.col), green(p.col), blue(p.col), map(p.life, 0, 40, 0, 200));
+    ellipse(p.x, p.y, map(p.life, 0, 40, 1, 10));
+    p.x += p.dx;
+    p.y += p.dy;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  
+  // face
+  
+  for (let i = 0; i < faces.length; i++) {
+    let face = faces[i];
+
+    if (showKeypoints) drawPoints(face);
+  
+
+    // Face center for halo
+    let faceCenterX = face.faceOval.centerX;
+    let faceCenterY = face.faceOval.centerY;
+
+    let haloX = face.keypoints[10].x;
+    let haloY = face.keypoints[10].y;
+
+    // Smooth floating halo
+    if (haloX === 0 && haloY === 0) {
+      haloX = faceCenterX;
+      haloY = faceCenterY - 150;
+    } else {
+      haloX = lerp(haloX, faceCenterX, 0.05);
+      haloY = lerp(haloY, faceCenterY - 150, 0.05);
+    }
+
+    // Draw glowing halo
+    noFill();
+    stroke(255, 220, 0);
+    strokeWeight(10);
+    for (let j = 0; j < 5; j++) {
+      ellipse(haloX, haloY - 150, 200 + j * 10, 60 + j * 5);
+    }
+
+   
+
+    // drawPoints(face.leftEye);
+    // drawPoints(face.rightEye);
+    // drawPoints(face.lips);
+  }
 }
 
+// support functions
 
 function drawConnections(hand) {
-  // Draw the skeletal connections
-  push()
+  push();
   for (let j = 0; j < connections.length; j++) {
     let pointAIndex = connections[j][0];
     let pointBIndex = connections[j][1];
@@ -88,40 +115,16 @@ function drawConnections(hand) {
     strokeWeight(2);
     line(pointA.x, pointA.y, pointB.x, pointB.y);
   }
-  pop()
+  pop();
 }
 
-function pinchCircle(hand) { // adapted from https://editor.p5js.org/ml5/sketches/DNbSiIYKB
-  // Find the index finger tip and thumb tip
-  let finger = hand.index_finger_tip;
-  //let finger = hand.pinky_finger_tip;
-  let thumb = hand.thumb_tip;
-
-  // Draw circles at finger positions
-  let centerX = (finger.x + thumb.x) / 2;
-  let centerY = (finger.y + thumb.y) / 2;
-  // Calculate the pinch "distance" between finger and thumb
-  let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
-
-  // This circle's size is controlled by a "pinch" gesture
-  fill(0, 255, 0, 200);
-  stroke(0);
-  strokeWeight(2);
-  circle(centerX, centerY, pinch);
-
-}
-
-
-// This function draw's a dot on all the keypoints. It can be passed a whole face, or part of one. 
 function drawPoints(feature) {
-
-  push()
+  push();
   for (let i = 0; i < feature.keypoints.length; i++) {
     let element = feature.keypoints[i];
     noStroke();
     fill(0, 255, 0);
-    circle(element.x, element.y, 5);
+    circle(element.x, element.y, 4);
   }
-  pop()
-
+  pop();
 }
